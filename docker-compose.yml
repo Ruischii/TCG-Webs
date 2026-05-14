@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tcg-postgres
+    environment:
+      POSTGRES_DB: tcg_platform
+      POSTGRES_USER: tcg_user
+      POSTGRES_PASSWORD: tcg_password_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tcg_user -d tcg_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tcg-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: tcg-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tcg-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tcg-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://tcg_user:tcg_password_2024@postgres:5432/tcg_platform
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=tcg-jwt-secret-key-2024
+      - KIOTVIET_CLIENT_ID=your_kiotviet_client_id
+      - KIOTVIET_CLIENT_SECRET=your_kiotviet_client_secret
+      - KIOTVIET_RETAILER=your_retailer_name
+      - KIOTVIET_WEBHOOK_SECRET=your_webhook_secret
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - tcg-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tcg-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - tcg-network
+
+  adminer:
+    image: adminer:latest
+    container_name: tcg-adminer
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    networks:
+      - tcg-network
+
+  # KiotViet Sync Worker
+  sync-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    container_name: tcg-sync-worker
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://tcg_user:tcg_password_2024@postgres:5432/tcg_platform
+      - REDIS_URL=redis://redis:6379
+      - KIOTVIET_CLIENT_ID=your_kiotviet_client_id
+      - KIOTVIET_CLIENT_SECRET=your_kiotviet_client_secret
+      - KIOTVIET_RETAILER=your_retailer_name
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - tcg-network
+
+networks:
+  tcg-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

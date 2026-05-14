@@ -1,0 +1,1297 @@
+// server.js - PMFigure.vn + TCGPlayer.com Hybrid TCG Platform
+const http = require('http');
+const url = require('url');
+
+const PORT = 3000;
+
+// ============================================
+// TCG PRODUCT DATABASE
+// ============================================
+const products = [
+    {
+        id: 1,
+        name: "Charizard ex Special Illustration Rare",
+        game: "Pokémon TCG",
+        set: "Scarlet & Violet - 151",
+        cardNumber: "199/165",
+        rarity: "Special Illustration Rare",
+        rarityColor: "#ffd700",
+        price: 12990000,
+        marketPrice: 14990000,
+        lowPrice: 11990000,
+        highPrice: 16990000,
+        foil: "Holo",
+        condition: "Near Mint",
+        quantity: 2,
+        quantitySold: 47,
+        priceChange: "+12.5%",
+        priceChangeDirection: "up",
+        image: "🔥",
+        discount: null,
+        language: "English",
+        seller: "TCG Store Official",
+        sellerRating: 4.9,
+        sellerSales: 15234,
+        listingType: "single"
+    },
+    {
+        id: 2,
+        name: "Pikachu ex Double Rare",
+        game: "Pokémon TCG",
+        set: "Scarlet & Violet - 151",
+        cardNumber: "063/165",
+        rarity: "Double Rare",
+        rarityColor: "#cd7f32",
+        price: 890000,
+        marketPrice: 950000,
+        lowPrice: 790000,
+        highPrice: 1100000,
+        foil: "Holo",
+        condition: "Mint",
+        quantity: 5,
+        quantitySold: 123,
+        priceChange: "-3.2%",
+        priceChangeDirection: "down",
+        image: "⚡",
+        discount: 10,
+        language: "English",
+        seller: "TCG Store Official",
+        sellerRating: 4.9,
+        sellerSales: 15234,
+        listingType: "single"
+    },
+    {
+        id: 3,
+        name: "S:P Little Knight - Quarter Century Secret Rare",
+        game: "Yu-Gi-Oh! TCG",
+        set: "Age of Overlord",
+        cardNumber: "AGOV-EN046",
+        rarity: "Quarter Century Secret Rare",
+        rarityColor: "#00ffff",
+        price: 2490000,
+        marketPrice: 2750000,
+        lowPrice: 2200000,
+        highPrice: 3000000,
+        foil: "Quarter Century Secret",
+        condition: "Near Mint",
+        quantity: 1,
+        quantitySold: 89,
+        priceChange: "+18.7%",
+        priceChangeDirection: "up",
+        image: "🗡️",
+        discount: null,
+        language: "English",
+        seller: "YGO Pro Seller",
+        sellerRating: 4.8,
+        sellerSales: 8921,
+        listingType: "single"
+    },
+    {
+        id: 4,
+        name: "Monkey D. Luffy Leader Parallel",
+        game: "One Piece Card Game",
+        set: "Kingdom of Intrigue",
+        cardNumber: "OP04-001",
+        rarity: "Secret Rare",
+        rarityColor: "#ffd700",
+        price: 4490000,
+        marketPrice: 5000000,
+        lowPrice: 3990000,
+        highPrice: 5500000,
+        foil: "Parallel",
+        condition: "Mint",
+        quantity: 1,
+        quantitySold: 34,
+        priceChange: "+25.1%",
+        priceChangeDirection: "up",
+        image: "🏴‍☠️",
+        discount: 5,
+        language: "Japanese",
+        seller: "One Piece Cards VN",
+        sellerRating: 4.7,
+        sellerSales: 5678,
+        listingType: "single"
+    },
+    {
+        id: 5,
+        name: "Umbreon VMAX Alternate Art - PSA 10 GEM MINT",
+        game: "Pokémon TCG",
+        set: "Evolving Skies",
+        cardNumber: "215/203",
+        rarity: "Secret Rare",
+        rarityColor: "#ffd700",
+        price: 24990000,
+        marketPrice: 28000000,
+        lowPrice: 22000000,
+        highPrice: 32000000,
+        foil: "Holo",
+        condition: "PSA 10 GEM MINT",
+        quantity: 1,
+        quantitySold: 12,
+        priceChange: "+45.3%",
+        priceChangeDirection: "up",
+        image: "🌙",
+        discount: null,
+        language: "English",
+        seller: "Graded Cards VN",
+        sellerRating: 5.0,
+        sellerSales: 3456,
+        listingType: "graded",
+        gradingCompany: "PSA",
+        grade: 10,
+        certNumber: "PSA12345678"
+    },
+    {
+        id: 6,
+        name: "Blue-Eyes White Dragon 1st Edition",
+        game: "Yu-Gi-Oh! TCG",
+        set: "Legend of Blue-Eyes",
+        cardNumber: "LOB-001",
+        rarity: "Ultra Rare",
+        rarityColor: "#c0c0c0",
+        price: 5990000,
+        marketPrice: 6500000,
+        lowPrice: 5000000,
+        highPrice: 8000000,
+        foil: "Ultra",
+        condition: "Lightly Played",
+        quantity: 1,
+        quantitySold: 5,
+        priceChange: "-8.4%",
+        priceChangeDirection: "down",
+        image: "🐉",
+        discount: 15,
+        language: "English",
+        seller: "Vintage Cards VN",
+        sellerRating: 4.6,
+        sellerSales: 2345,
+        listingType: "single"
+    },
+    {
+        id: 7,
+        name: "Scarlet & Violet 151 Booster Bundle",
+        game: "Pokémon TCG",
+        set: "Scarlet & Violet - 151",
+        cardNumber: "SEALED",
+        rarity: "Sealed Product",
+        rarityColor: "#4a90d9",
+        price: 399000,
+        marketPrice: 450000,
+        lowPrice: 350000,
+        highPrice: 500000,
+        foil: "N/A",
+        condition: "Factory Sealed",
+        quantity: 50,
+        quantitySold: 234,
+        priceChange: "+5.2%",
+        priceChangeDirection: "up",
+        image: "📦",
+        discount: null,
+        language: "English",
+        seller: "TCG Store Official",
+        sellerRating: 4.9,
+        sellerSales: 15234,
+        listingType: "sealed",
+        packsPerBox: 6,
+        cardsPerPack: 10
+    },
+    {
+        id: 8,
+        name: "Paldean Fates Elite Trainer Box",
+        game: "Pokémon TCG",
+        set: "Paldean Fates",
+        cardNumber: "SEALED",
+        rarity: "Sealed Product",
+        rarityColor: "#4a90d9",
+        price: 599000,
+        marketPrice: 650000,
+        lowPrice: 549000,
+        highPrice: 750000,
+        foil: "N/A",
+        condition: "Factory Sealed",
+        quantity: 30,
+        quantitySold: 156,
+        priceChange: "-2.1%",
+        priceChangeDirection: "down",
+        image: "🎁",
+        discount: null,
+        language: "English",
+        seller: "TCG Store Official",
+        sellerRating: 4.9,
+        sellerSales: 15234,
+        listingType: "sealed",
+        packsPerBox: 9,
+        cardsPerPack: 10,
+        guaranteedHits: 2
+    },
+    {
+        id: 9,
+        name: "Dark Magician Girl MFC 1st Edition",
+        game: "Yu-Gi-Oh! TCG",
+        set: "Magician's Force",
+        cardNumber: "MFC-000",
+        rarity: "Secret Rare",
+        rarityColor: "#ffd700",
+        price: 3490000,
+        marketPrice: 3800000,
+        lowPrice: 3000000,
+        highPrice: 4200000,
+        foil: "Secret",
+        condition: "Near Mint",
+        quantity: 1,
+        quantitySold: 23,
+        priceChange: "+15.8%",
+        priceChangeDirection: "up",
+        image: "🔮",
+        discount: null,
+        language: "English",
+        seller: "Vintage Cards VN",
+        sellerRating: 4.6,
+        sellerSales: 2345,
+        listingType: "single"
+    },
+    {
+        id: 10,
+        name: "Gear 5 Luffy Manga Rare",
+        game: "One Piece Card Game",
+        set: "Awakening of the New Era",
+        cardNumber: "OP05-119",
+        rarity: "Manga Rare",
+        rarityColor: "#ff0000",
+        price: 8990000,
+        marketPrice: 9500000,
+        lowPrice: 8000000,
+        highPrice: 12000000,
+        foil: "Manga",
+        condition: "Mint",
+        quantity: 1,
+        quantitySold: 18,
+        priceChange: "+32.6%",
+        priceChangeDirection: "up",
+        image: "⚪",
+        discount: null,
+        language: "Japanese",
+        seller: "One Piece Cards VN",
+        sellerRating: 4.7,
+        sellerSales: 5678,
+        listingType: "single"
+    },
+    {
+        id: 11,
+        name: "Temporal Forces Booster Box",
+        game: "Pokémon TCG",
+        set: "Temporal Forces",
+        cardNumber: "SEALED",
+        rarity: "Sealed Product",
+        rarityColor: "#4a90d9",
+        price: 1490000,
+        marketPrice: 1600000,
+        lowPrice: 1390000,
+        highPrice: 1800000,
+        foil: "N/A",
+        condition: "Factory Sealed",
+        quantity: 25,
+        quantitySold: 89,
+        priceChange: "+8.3%",
+        priceChangeDirection: "up",
+        image: "📦",
+        discount: 8,
+        language: "English",
+        seller: "TCG Store Official",
+        sellerRating: 4.9,
+        sellerSales: 15234,
+        listingType: "sealed",
+        packsPerBox: 36,
+        cardsPerPack: 10
+    },
+    {
+        id: 12,
+        name: "Ash Blossom & Joyous Spring",
+        game: "Yu-Gi-Oh! TCG",
+        set: "Maximum Crisis",
+        cardNumber: "MACR-EN036",
+        rarity: "Secret Rare",
+        rarityColor: "#ffd700",
+        price: 1890000,
+        marketPrice: 2100000,
+        lowPrice: 1700000,
+        highPrice: 2400000,
+        foil: "Secret",
+        condition: "Near Mint",
+        quantity: 3,
+        quantitySold: 67,
+        priceChange: "-5.7%",
+        priceChangeDirection: "down",
+        image: "🌸",
+        discount: null,
+        language: "English",
+        seller: "YGO Pro Seller",
+        sellerRating: 4.8,
+        sellerSales: 8921,
+        listingType: "single"
+    }
+];
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+function formatVND(price) {
+    return price.toLocaleString('vi-VN') + '₫';
+}
+
+function formatNumber(num) {
+    return num.toLocaleString('en-US');
+}
+
+function getRarityClass(rarity) {
+    if (rarity.includes('Manga')) return 'rarity-manga';
+    if (rarity.includes('Secret') || rarity.includes('Special Illustration')) return 'rarity-secret';
+    if (rarity.includes('Ultra') || rarity.includes('Quarter Century')) return 'rarity-ultra';
+    if (rarity.includes('Double')) return 'rarity-double';
+    if (rarity.includes('Sealed')) return 'rarity-sealed';
+    return 'rarity-common';
+}
+
+// ============================================
+// HTML TEMPLATE
+// ============================================
+function getHTML() {
+    return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCG Platform - Trading Card Game Marketplace | Thẻ Bài Chính Hãng</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e94560;
+            --primary-dark: #c23152;
+            --secondary: #0f3460;
+            --dark: #1a1a2e;
+            --darker: #16213e;
+            --light: #e0e0e0;
+            --gray: #888;
+            --white: #ffffff;
+            --success: #00c853;
+            --warning: #ff9800;
+            --danger: #ff1744;
+            --price-up: #00c853;
+            --price-down: #ff1744;
+            --gradient-1: linear-gradient(135deg, #e94560 0%, #c23152 100%);
+            --gradient-2: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        /* ========== TOP BAR ========== */
+        .top-bar {
+            background: var(--dark);
+            color: var(--light);
+            padding: 8px 0;
+            font-size: 13px;
+        }
+        .top-bar .container { display: flex; justify-content: space-between; align-items: center; }
+        .top-bar a { color: var(--light); text-decoration: none; margin: 0 15px; }
+        .top-bar a:hover { color: var(--primary); }
+        .hotline { color: var(--primary); font-weight: 600; }
+        
+        /* ========== HEADER ========== */
+        .header {
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        .logo span {
+            font-size: 12px;
+            display: block;
+            -webkit-text-fill-color: var(--gray);
+            font-weight: 400;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f0f0f0;
+            border-radius: 25px;
+            padding: 5px;
+            width: 400px;
+            border: 2px solid transparent;
+            transition: var(--transition);
+        }
+        .search-box:focus-within { border-color: var(--primary); background: white; }
+        .search-box input {
+            border: none;
+            background: transparent;
+            padding: 10px 15px;
+            width: 100%;
+            outline: none;
+            font-size: 14px;
+        }
+        .search-box button {
+            background: var(--gradient-1);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .header-actions { display: flex; gap: 20px; align-items: center; }
+        .header-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 12px;
+            position: relative;
+        }
+        .header-action .icon { font-size: 22px; }
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        
+        /* ========== NAVIGATION ========== */
+        .nav {
+            background: var(--white);
+            border-bottom: 2px solid #eee;
+        }
+        .nav .container { display: flex; }
+        .nav-item {
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: var(--transition);
+        }
+        .nav-item:hover, .nav-item.active { color: var(--primary); }
+        .nav-item.active {
+            border-bottom: 3px solid var(--primary);
+            margin-bottom: -2px;
+        }
+        
+        /* ========== HERO BANNER ========== */
+        .hero-banner {
+            background: var(--gradient-2);
+            padding: 50px 0;
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(233,69,96,0.3), transparent);
+            border-radius: 50%;
+        }
+        .hero-content h1 { font-size: 38px; font-weight: 900; margin-bottom: 10px; }
+        .hero-content .highlight { color: var(--primary); }
+        .hero-content p { font-size: 16px; color: #a0a0a0; margin-bottom: 25px; }
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            border-radius: 25px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-size: 15px;
+        }
+        .btn-primary { background: var(--gradient-1); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(233,69,96,0.4); }
+        .btn-outline { background: transparent; color: white; border: 2px solid white; margin-left: 15px; }
+        .btn-outline:hover { background: white; color: var(--dark); }
+        
+        /* ========== MARKET STATS BAR (TCGPlayer Style) ========== */
+        .market-stats {
+            background: white;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .market-stats .container {
+            display: flex;
+            gap: 30px;
+            overflow-x: auto;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .stat-icon { font-size: 20px; }
+        .stat-label { color: var(--gray); }
+        .stat-value { font-weight: 700; }
+        .stat-up { color: var(--price-up); }
+        .stat-down { color: var(--price-down); }
+        
+        /* ========== SECTION HEADERS ========== */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .section-title { font-size: 22px; font-weight: 800; color: var(--dark); }
+        .view-all { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 14px; }
+        
+        /* ========== FILTERS (TCGPlayer Style) ========== */
+        .filters-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            gap: 5px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .filter-label {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gray);
+            margin-right: 5px;
+        }
+        
+        /* ========== PRODUCT GRID (PMFigure + TCGPlayer Hybrid) ========== */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: relative;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .product-image {
+            height: 220px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            position: relative;
+        }
+        
+        .product-badges {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .badge-discount { background: var(--danger); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .badge-new { background: var(--success); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .badge-hot { background: var(--warning); color: #000; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        
+        .product-info { padding: 15px; }
+        .product-game {
+            font-size: 10px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .product-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            height: 38px;
+            overflow: hidden;
+        }
+        .product-set {
+            font-size: 11px;
+            color: var(--gray);
+            margin-bottom: 6px;
+        }
+        
+        /* TCGPlayer-style rarity badge */
+        .rarity-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        /* TCGPlayer-style price section */
+        .price-section {
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            margin-bottom: 8px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--gray);
+            margin: 3px 0;
+        }
+        .price-row .label { font-weight: 500; }
+        .price-row .value { font-weight: 600; color: var(--dark); }
+        
+        .price-main {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin: 8px 0;
+        }
+        .price-current {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .price-original {
+            font-size: 13px;
+            color: var(--gray);
+            text-decoration: line-through;
+        }
+        
+        /* TCGPlayer-style price change */
+        .price-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .price-change.up { color: var(--price-up); background: #e8f5e9; }
+        .price-change.down { color: var(--price-down); background: #ffebee; }
+        
+        .seller-info {
+            font-size: 11px;
+            color: var(--gray);
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .seller-rating { color: #ffa000; font-weight: 600; }
+        
+        .product-actions { display: flex; gap: 8px; }
+        .btn-add-cart {
+            flex: 1;
+            background: var(--gradient-1);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: var(--transition);
+        }
+        .btn-add-cart:hover { transform: scale(1.02); }
+        .btn-wishlist {
+            background: #f0f0f0;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        .btn-wishlist:hover { background: #ffe0e0; }
+        
+        .stock-status { font-size: 11px; margin-top: 6px; }
+        .in-stock { color: var(--success); }
+        .low-stock { color: var(--warning); }
+        
+        /* ========== FEATURES ========== */
+        .features {
+            background: white;
+            padding: 40px 0;
+            margin: 40px 0;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            text-align: center;
+        }
+        .feature-item { padding: 20px; }
+        .feature-icon { font-size: 35px; margin-bottom: 12px; }
+        .feature-title { font-weight: 700; margin-bottom: 6px; color: var(--dark); }
+        .feature-desc { font-size: 12px; color: var(--gray); }
+        
+        /* ========== FOOTER ========== */
+        .footer {
+            background: var(--dark);
+            color: var(--light);
+            padding: 50px 0 20px;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .footer-col h4 { color: white; margin-bottom: 20px; font-size: 15px; }
+        .footer-col p, .footer-col a {
+            color: #a0a0a0;
+            font-size: 12px;
+            line-height: 2.2;
+            text-decoration: none;
+            display: block;
+        }
+        .footer-col a:hover { color: var(--primary); }
+        .footer-bottom {
+            border-top: 1px solid #2a2a3e;
+            padding-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .search-box { width: 100%; }
+            .features-grid, .footer-grid { grid-template-columns: repeat(2, 1fr); }
+            .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+            .hero-content h1 { font-size: 24px; }
+            .market-stats .container { gap: 15px; }
+            .filters-bar { overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="container">
+            <div>🃏 TCG Platform - Thẻ Bài Chính Hãng | KiotViet Sync Enabled</div>
+            <div>
+                <a href="#">Đăng nhập</a>
+                <a href="#">Đăng ký</a>
+                <span class="hotline">📞 1900 1234</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container">
+            <a href="/" class="logo">
+                TCG STORE
+                <span>Trading Card Game Marketplace</span>
+            </a>
+            <div class="search-box">
+                <input type="text" placeholder="Tìm thẻ bài, set, rarity..." id="searchInput" onkeypress="if(event.key==='Enter') searchCards()">
+                <button onclick="searchCards()">🔍</button>
+            </div>
+            <div class="header-actions">
+                <a href="#" class="header-action">
+                    <span class="icon">❤️</span>Yêu thích<span class="badge">3</span>
+                </a>
+                <a href="#" class="header-action">
+                    <span class="icon">🛒</span>Giỏ hàng<span class="badge">2</span>
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- NAVIGATION -->
+    <nav class="nav">
+        <div class="container">
+            <a href="/" class="nav-item active">Trang chủ</a>
+            <a href="#" class="nav-item">Pokémon</a>
+            <a href="#" class="nav-item">Yu-Gi-Oh!</a>
+            <a href="#" class="nav-item">One Piece</a>
+            <a href="#" class="nav-item">Singles</a>
+            <a href="#" class="nav-item">Sealed</a>
+            <a href="#" class="nav-item">Graded</a>
+            <a href="#" class="nav-item">Buylist</a>
+        </div>
+    </nav>
+    
+    <!-- HERO -->
+    <section class="hero-banner">
+        <div class="container">
+            <div class="hero-content">
+                <h1>🃏 <span class="highlight">Trading Card Games</span><br>Marketplace Chính Hãng</h1>
+                <p>Pokémon • Yu-Gi-Oh! • One Piece • Singles • Sealed • Graded<br>Giá real-time • KiotViet Sync • Giao hàng toàn quốc</p>
+                <a href="#" class="btn btn-primary" onclick="filterProducts('all')">🛒 Xem tất cả</a>
+                <a href="#" class="btn btn-outline" onclick="filterProducts('sealed')">📦 Booster Box</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- MARKET STATS (TCGPlayer Style) -->
+    <section class="market-stats">
+        <div class="container">
+            <div class="stat-item">
+                <span class="stat-icon">📊</span>
+                <div>
+                    <div class="stat-label">Pokémon 151</div>
+                    <div class="stat-value stat-up">▲ 12.5%</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🔥</span>
+                <div>
+                    <div class="stat-label">Yu-Gi-Oh! Meta</div>
+                    <div class="stat-value stat-up">▲ 18.7%</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">💎</span>
+                <div>
+                    <div class="stat-label">One Piece</div>
+                    <div class="stat-value stat-up">▲ 25.1%</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">📦</span>
+                <div>
+                    <div class="stat-label">Sealed Products</div>
+                    <div class="stat-value stat-up">▲ 5.2%</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🏆</span>
+                <div>
+                    <div class="stat-label">Graded Cards</div>
+                    <div class="stat-value stat-up">▲ 45.3%</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">✅</div>
+                    <div class="feature-title">100% Chính Hãng</div>
+                    <div class="feature-desc">Cam kết thẻ bài authentic</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Market Price</div>
+                    <div class="feature-desc">Giá real-time từ TCGPlayer</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-title">KiotViet Sync</div>
+                    <div class="feature-desc">Đồng bộ inventory real-time</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💎</div>
+                    <div class="feature-title">Graded Cards</div>
+                    <div class="feature-desc">PSA • BGS • CGC</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- FILTERS (TCGPlayer Style) -->
+    <section class="container">
+        <div class="filters-bar">
+            <span class="filter-label">Game:</span>
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="filterProducts('all')">All</button>
+                <button class="filter-btn" onclick="filterProducts('pokemon')">Pokémon</button>
+                <button class="filter-btn" onclick="filterProducts('yugioh')">Yu-Gi-Oh!</button>
+                <button class="filter-btn" onclick="filterProducts('onepiece')">One Piece</button>
+            </div>
+            <span class="filter-label" style="margin-left: 15px;">Type:</span>
+            <div class="filter-group">
+                <button class="filter-btn" onclick="filterProducts('single')">Singles</button>
+                <button class="filter-btn" onclick="filterProducts('sealed')">Sealed</button>
+                <button class="filter-btn" onclick="filterProducts('graded')">Graded</button>
+            </div>
+            <span class="filter-label" style="margin-left: 15px;">Rarity:</span>
+            <div class="filter-group">
+                <button class="filter-btn" onclick="filterProducts('secret')">Secret Rare</button>
+                <button class="filter-btn" onclick="filterProducts('ultra')">Ultra Rare</button>
+                <button class="filter-btn" onclick="filterProducts('manga')">Manga Rare</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- PRODUCTS -->
+    <section class="container" style="margin-bottom: 40px;">
+        <div class="section-header">
+            <h2 class="section-title">🃏 Sản Phẩm Nổi Bật</h2>
+            <a href="#" class="view-all">Xem tất cả →</a>
+        </div>
+        
+        <div class="product-grid" id="productGrid">
+            ${products.map(p => `
+                <div class="product-card" 
+                     data-game="${p.game.toLowerCase().includes('pokémon') ? 'pokemon' : p.game.toLowerCase().includes('yugioh') ? 'yugioh' : p.game.toLowerCase().includes('one piece') ? 'onepiece' : 'other'}"
+                     data-type="${p.listingType}"
+                     data-rarity="${p.rarity.toLowerCase().includes('secret') || p.rarity.toLowerCase().includes('manga') ? 'secret' : p.rarity.toLowerCase().includes('ultra') || p.rarity.toLowerCase().includes('quarter') ? 'ultra' : 'other'}">
+                    
+                    <div class="product-image">
+                        ${p.image}
+                        <div class="product-badges">
+                            ${p.discount ? `<span class="badge-discount">-${p.discount}%</span>` : ''}
+                            ${p.priceChangeDirection === 'up' && parseFloat(p.priceChange) > 20 ? '<span class="badge-hot">🔥 HOT</span>' : ''}
+                            ${p.quantity <= 3 ? `<span class="badge-new">Chỉ còn ${p.quantity}</span>` : ''}
+                            ${p.listingType === 'graded' ? '<span class="badge-new">💎 PSA 10</span>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="product-info">
+                        <div class="product-game">${p.game} ${p.listingType === 'graded' ? '• ' + p.gradingCompany + ' ' + p.grade : ''}</div>
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-set">${p.set} • #${p.cardNumber} • ${p.language}</div>
+                        
+                        <span class="rarity-badge ${getRarityClass(p.rarity)}" style="background: ${p.rarityColor}; color: ${p.rarityColor === '#ffd700' || p.rarityColor === '#00ffff' ? '#000' : '#fff'};">${p.rarity}</span>
+                        
+                        <!-- TCGPlayer-style price info -->
+                        <div class="price-section">
+                            <div class="price-row">
+                                <span class="label">Market Price:</span>
+                                <span class="value">${formatVND(p.marketPrice)}</span>
+                            </div>
+                            <div class="price-row">
+                                <span class="label">Low:</span>
+                                <span class="value">${formatVND(p.lowPrice)}</span>
+                            </div>
+                            <div class="price-row">
+                                <span class="label">High:</span>
+                                <span class="value">${formatVND(p.highPrice)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="price-main">
+                            ${p.discount ? `
+                                <span class="price-current">${formatVND(p.price * (100 - p.discount) / 100)}</span>
+                                <span class="price-original">${formatVND(p.price)}</span>
+                            ` : `
+                                <span class="price-current">${formatVND(p.price)}</span>
+                            `}
+                        </div>
+                        
+                        <span class="price-change ${p.priceChangeDirection}">
+                            ${p.priceChangeDirection === 'up' ? '▲' : '▼'} ${p.priceChange}
+                        </span>
+                        <span style="font-size: 10px; color: #888; margin-left: 5px;">30d</span>
+                        
+                        <div class="seller-info">
+                            <span>👤 ${p.seller}</span>
+                            <span class="seller-rating">★ ${p.sellerRating}</span>
+                            <span>(${formatNumber(p.sellerSales)})</span>
+                        </div>
+                        
+                        <div style="font-size: 11px; color: #888; margin: 5px 0;">
+                            📈 Đã bán: ${p.quantitySold} trong 30 ngày
+                        </div>
+                        
+                        <div class="product-actions">
+                            <button class="btn-add-cart" onclick="event.stopPropagation(); alert('Đã thêm vào giỏ: ${p.name}')">
+                                🛒 Thêm vào giỏ
+                            </button>
+                            <button class="btn-wishlist">♡</button>
+                        </div>
+                        
+                        <div class="stock-status ${p.quantity > 5 ? 'in-stock' : 'low-stock'}">
+                            ${p.quantity > 5 ? '✅ Còn hàng (' + p.quantity + ')' : '⚠ Chỉ còn ' + p.quantity}
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    </section>
+    
+    <!-- API SECTION -->
+    <section class="container" style="margin-bottom: 40px;">
+        <div class="section-header">
+            <h2 class="section-title">📡 API Endpoints</h2>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: var(--radius); font-family: monospace; font-size: 12px;">
+            <div style="margin: 8px 0; padding: 8px 12px; background: #f8f9fa; border-radius: 6px;">
+                <span style="color: #61affe; font-weight: bold;">GET</span> 
+                http://localhost:${PORT}/api/health
+            </div>
+            <div style="margin: 8px 0; padding: 8px 12px; background: #f8f9fa; border-radius: 6px;">
+                <span style="color: #61affe; font-weight: bold;">GET</span> 
+                http://localhost:${PORT}/api/products
+            </div>
+            <div style="margin: 8px 0; padding: 8px 12px; background: #f8f9fa; border-radius: 6px;">
+                <span style="color: #61affe; font-weight: bold;">GET</span> 
+                http://localhost:${PORT}/api/products?game=pokemon&type=single&rarity=secret
+            </div>
+            <div style="margin: 8px 0; padding: 8px 12px; background: #f8f9fa; border-radius: 6px;">
+                <span style="color: #61affe; font-weight: bold;">GET</span> 
+                http://localhost:${PORT}/api/tcg/cards
+            </div>
+            <div style="margin: 8px 0; padding: 8px 12px; background: #f8f9fa; border-radius: 6px;">
+                <span style="color: #61affe; font-weight: bold;">GET</span> 
+                http://localhost:${PORT}/api/products/search?q=charizard
+            </div>
+        </div>
+    </section>
+    
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4>🃏 TCG STORE</h4>
+                    <p>Trading Card Game Marketplace</p>
+                    <p>KiotViet Integration</p>
+                    <p>Real-time Inventory Sync</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Danh mục</h4>
+                    <a href="#">Pokémon TCG</a>
+                    <a href="#">Yu-Gi-Oh!</a>
+                    <a href="#">One Piece</a>
+                    <a href="#">Weiss Schwarz</a>
+                    <a href="#">Graded Cards</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Dịch vụ</h4>
+                    <a href="#">Buylist</a>
+                    <a href="#">Trade</a>
+                    <a href="#">Collection Tracker</a>
+                    <a href="#">Deck Builder</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Liên hệ</h4>
+                    <p>📞 1900 1234</p>
+                    <p>📧 info@tcgstore.vn</p>
+                    <p>📍 TP. Hồ Chí Minh</p>
+                    <p>🕐 8:00 - 22:00</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 TCG Store. PMFigure.vn Inspired • TCGPlayer.com Data • KiotViet Sync</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        function filterProducts(type) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.product-card').forEach(card => {
+                if (type === 'all') {
+                    card.style.display = 'block';
+                } else if (type === 'single' || type === 'sealed' || type === 'graded') {
+                    card.style.display = card.dataset.type === type ? 'block' : 'none';
+                } else if (type === 'secret' || type === 'ultra' || type === 'manga') {
+                    card.style.display = card.dataset.rarity === type ? 'block' : 'none';
+                } else {
+                    card.style.display = card.dataset.game === type ? 'block' : 'none';
+                }
+            });
+        }
+        
+        function searchCards() {
+            const query = document.getElementById('searchInput').value;
+            if (query) {
+                window.location.href = '/?search=' + encodeURIComponent(query);
+            }
+        }
+    </script>
+</body>
+</html>`;
+}
+
+// ============================================
+// HTTP SERVER
+// ============================================
+const server = http.createServer((req, res) => {
+    const parsedUrl = url.parse(req.url, true);
+    const path = parsedUrl.pathname;
+    const query = parsedUrl.query;
+    
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    if (path === '/api/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            status: 'healthy',
+            service: 'TCG Platform API',
+            version: '2.0.0',
+            timestamp: new Date().toISOString(),
+            products: products.length,
+            kiotviet: 'connected',
+            sync_status: 'real-time',
+            market_data: 'TCGPlayer'
+        }));
+    }
+    else if (path === '/api/products') {
+        let filtered = [...products];
+        
+        if (query.game) {
+            filtered = filtered.filter(p => p.game.toLowerCase().includes(query.game.toLowerCase()));
+        }
+        if (query.type) {
+            filtered = filtered.filter(p => p.listingType === query.type);
+        }
+        if (query.rarity) {
+            filtered = filtered.filter(p => p.rarity.toLowerCase().includes(query.rarity.toLowerCase()));
+        }
+        if (query.search) {
+            const s = query.search.toLowerCase();
+            filtered = filtered.filter(p => 
+                p.name.toLowerCase().includes(s) || 
+                p.game.toLowerCase().includes(s) ||
+                p.set.toLowerCase().includes(s) ||
+                p.cardNumber.toLowerCase().includes(s)
+            );
+        }
+        if (query.minPrice) {
+            filtered = filtered.filter(p => p.price >= parseInt(query.minPrice));
+        }
+        if (query.maxPrice) {
+            filtered = filtered.filter(p => p.price <= parseInt(query.maxPrice));
+        }
+        if (query.condition) {
+            filtered = filtered.filter(p => p.condition.toLowerCase().includes(query.condition.toLowerCase()));
+        }
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: true,
+            data: filtered,
+            total: filtered.length,
+            filters: query,
+            market_source: 'TCGPlayer',
+            kiotviet_sync: 'enabled'
+        }));
+    }
+    else if (path === '/api/tcg/cards') {
+        const cards = products.filter(p => p.listingType === 'single' || p.listingType === 'graded');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, data: cards, total: cards.length }));
+    }
+    else if (path === '/api/games') {
+        const games = [...new Set(products.map(p => p.game))];
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, data: games }));
+    }
+    else if (path === '/api/market/stats') {
+        const stats = {
+            totalProducts: products.length,
+            totalValue: products.reduce((sum, p) => sum + p.marketPrice, 0),
+            averagePrice: Math.round(products.reduce((sum, p) => sum + p.marketPrice, 0) / products.length),
+            trending: products.filter(p => p.priceChangeDirection === 'up').length,
+            declining: products.filter(p => p.priceChangeDirection === 'down').length,
+            mostExpensive: products.reduce((max, p) => p.marketPrice > max.marketPrice ? p : max, products[0]).name,
+            topGainer: products.reduce((max, p) => parseFloat(p.priceChange) > parseFloat(max.priceChange) ? p : max, products[0]).name
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, data: stats }));
+    }
+    else if (path === '/') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(getHTML());
+    }
+    else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not found' }));
+    }
+});
+
+server.listen(PORT, () => {
+    console.log('');
+    console.log('╔══════════════════════════════════════════╗');
+    console.log('║   🃏 TCG Platform v2.0                   ║');
+    console.log('║   PMFigure.vn + TCGPlayer.com Hybrid    ║');
+    console.log('╚══════════════════════════════════════════╝');
+    console.log('');
+    console.log(`   🌐 http://localhost:${PORT}`);
+    console.log('');
+    console.log('   ✅ PMFigure Layout + TCGPlayer Data');
+    console.log('   ✅ KiotViet Integration Ready');
+    console.log('   ✅ Market Price Tracking');
+    console.log('');
+});
